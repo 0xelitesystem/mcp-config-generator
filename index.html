@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCP Config Generator</title>
+<meta name="description" content="Build and validate MCP (Model Context Protocol) server configuration JSON. Form-driven editor for stdio and remote HTTP/SSE servers, with live output, validation warnings, and per-client config file locations. All client-side.">
+<link rel="canonical" href="https://0xelitesystem.github.io/mcp-config-generator/">
+<meta property="og:title" content="MCP Config Generator">
+<meta property="og:description" content="Build and validate MCP server configuration JSON in your browser. Stdio and remote transports, live validation, no data leaves the page.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://0xelitesystem.github.io/mcp-config-generator/">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "MCP Config Generator",
+  "description": "Build and validate MCP (Model Context Protocol) server configuration JSON. Form-driven editor for stdio and remote HTTP/SSE servers, with live output and validation. All client-side, no external dependencies.",
+  "url": "https://0xelitesystem.github.io/mcp-config-generator/",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Any",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "author": { "@type": "Person", "name": "0xelitesystem", "url": "https://elitesystem.ai" }
+}
+</script>
+<style>
+:root {
+  --bg: #fafaf6;
+  --surface: #ffffff;
+  --ink: #0a1d1e;
+  --ink-soft: #2c4a4c;
+  --rule: #c8d4d3;
+  --teal: #0f5c60;
+  --teal-deep: #0a4548;
+  --gold: #b07d2a;
+  --gold-deep: #8a611f;
+  --ok: #1a5c2e;
+  --warn: #8a5a00;
+  --err: #8b1a1a;
+  --code-bg: #f0ebe1;
+}
+[data-theme="dark"] {
+  --bg: #0c1c1d;
+  --surface: #14292a;
+  --ink: #e8ebe6;
+  --ink-soft: #b0c0bd;
+  --rule: #2a4042;
+  --teal: #4ab4ba;
+  --teal-deep: #6dc8ce;
+  --gold: #d4a155;
+  --gold-deep: #e6b876;
+  --ok: #6dd380;
+  --warn: #d4a155;
+  --err: #e88080;
+  --code-bg: #0a1718;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: ui-serif, Georgia, "Times New Roman", serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  line-height: 1.55;
+}
+.wrap { max-width: 1100px; margin: 0 auto; }
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 2px solid var(--teal);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+h1 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--teal);
+}
+.tag {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.75rem;
+  color: var(--gold-deep);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+[data-theme="dark"] .tag { color: var(--gold); }
+.theme-btn {
+  background: transparent;
+  border: 1px solid var(--rule);
+  color: var(--ink-soft);
+  padding: 0.4rem 0.85rem;
+  font-size: 0.8rem;
+  font-family: inherit;
+  cursor: pointer;
+  border-radius: 2px;
+}
+.theme-btn:hover { border-color: var(--teal); color: var(--teal); }
+.lede {
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+  margin-bottom: 1.5rem;
+  max-width: 70ch;
+}
+h2 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--teal);
+  margin-bottom: 0.75rem;
+}
+label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+  display: block;
+  margin-bottom: 0.35rem;
+}
+input[type="text"], select, textarea {
+  width: 100%;
+  background: var(--code-bg);
+  border: 1px solid var(--rule);
+  color: var(--ink);
+  padding: 0.5rem 0.65rem;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.83rem;
+  border-radius: 2px;
+}
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--teal); outline-offset: 1px; }
+textarea { min-height: 130px; resize: vertical; line-height: 1.5; }
+select { width: auto; min-width: 190px; }
+button {
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 0.55rem 1rem;
+  border: 1px solid var(--rule);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  border-radius: 2px;
+}
+button:hover { border-color: var(--teal); color: var(--teal); }
+button.primary {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: var(--surface);
+  font-weight: 600;
+}
+[data-theme="dark"] button.primary { color: var(--bg); }
+button.primary:hover { background: var(--teal-deep); border-color: var(--teal-deep); color: var(--surface); }
+[data-theme="dark"] button.primary:hover { color: var(--bg); }
+button.small { font-size: 0.75rem; padding: 0.3rem 0.65rem; }
+button.danger:hover { border-color: var(--err); color: var(--err); }
+.layout { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; align-items: start; }
+.col-left, .col-right { min-width: 0; }
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+.server-card {
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--teal);
+  border-radius: 2px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: var(--bg);
+}
+.server-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; gap: 0.5rem; }
+.server-title { font-size: 0.9rem; font-weight: 600; }
+.frow { margin-bottom: 0.75rem; }
+.frow-split { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+.kv-row { display: grid; grid-template-columns: 1fr 1fr max-content; gap: 0.4rem; margin-bottom: 0.4rem; }
+.arg-row { display: grid; grid-template-columns: 1fr max-content; gap: 0.4rem; margin-bottom: 0.4rem; }
+.add-row-btn { font-size: 0.75rem; padding: 0.3rem 0.65rem; }
+.presets { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.preset-note { font-size: 0.76rem; color: var(--ink-soft); font-style: italic; margin-top: 0.5rem; }
+.out-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; flex-wrap: wrap; gap: 0.5rem; }
+pre {
+  background: var(--code-bg);
+  padding: 0.9rem;
+  border-radius: 2px;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  overflow-x: auto;
+  white-space: pre;
+  color: var(--ink);
+}
+code { font-family: ui-monospace, SFMono-Regular, monospace; font-size: 0.82em; background: var(--code-bg); padding: 0.05rem 0.3rem; border-radius: 2px; }
+.client-toggle { display: flex; gap: 0.4rem; }
+.client-toggle button[aria-pressed="true"] {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: var(--surface);
+  font-weight: 600;
+}
+[data-theme="dark"] .client-toggle button[aria-pressed="true"] { color: var(--bg); }
+.msg { font-size: 0.83rem; padding: 0.55rem 0.7rem; border-radius: 2px; margin-bottom: 0.5rem; background: var(--code-bg); }
+.msg-err { color: var(--err); border-left: 3px solid var(--err); }
+.msg-warn { color: var(--warn); border-left: 3px solid var(--warn); }
+.msg-ok { color: var(--ok); border-left: 3px solid var(--ok); }
+.msg-info { color: var(--ink-soft); border-left: 3px solid var(--teal); }
+.loc-block { font-size: 0.85rem; color: var(--ink-soft); }
+.loc-block dt { font-weight: 600; color: var(--ink); margin-top: 0.6rem; font-size: 0.8rem; }
+.loc-block dd { margin-left: 0; margin-top: 0.15rem; word-break: break-all; }
+.security-note {
+  font-size: 0.83rem;
+  color: var(--warn);
+  padding: 0.6rem 0.75rem;
+  background: var(--code-bg);
+  border-left: 3px solid var(--warn);
+  border-radius: 2px;
+  margin-top: 0.85rem;
+}
+.empty-note { font-size: 0.85rem; color: var(--ink-soft); font-style: italic; }
+footer {
+  margin-top: 3rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--rule);
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+}
+footer a { color: var(--teal); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+@media (max-width: 860px) {
+  body { padding: 1rem 0.75rem; }
+  h1 { font-size: 1.4rem; }
+  .layout { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>MCP Config Generator</h1>
+    <div class="tag">Build and validate MCP server config JSON</div>
+  </div>
+  <button class="theme-btn" id="theme-toggle" type="button">Dark</button>
+</header>
+
+<p class="lede">MCP (Model Context Protocol) is an open protocol for connecting tools and data sources to LLM clients. Clients read a JSON config that lists the servers to connect to. This tool builds that JSON from a form, validates it as you go, and shows where the file lives for common clients. Everything stays in your browser.</p>
+
+<div class="layout">
+<div class="col-left">
+  <div class="panel">
+    <h2>Servers</h2>
+    <div id="servers"></div>
+    <button class="primary" id="add-server" type="button">Add server</button>
+    <div class="security-note">Security: a stdio server is a local program the client launches and runs with your user account. Only add servers you trust, from sources you have verified. Env values (like API keys) entered here stay on this page and, once in your config file, stay on your machine; they are not sent anywhere by this tool.</div>
+  </div>
+
+  <div class="panel">
+    <h2>Example presets</h2>
+    <div class="presets">
+      <button id="preset-fs" type="button">Filesystem (stdio)</button>
+      <button id="preset-remote" type="button">Remote HTTP server</button>
+      <button id="preset-local" type="button">Local dev server (HTTP)</button>
+    </div>
+    <div class="preset-note">These are illustrative examples, not endorsements. Replace commands, paths, URLs, and tokens with your own before use.</div>
+  </div>
+
+  <div class="panel">
+    <h2>Validate an existing config</h2>
+    <label for="paste-input">Paste config JSON</label>
+    <textarea id="paste-input" spellcheck="false" placeholder='{"mcpServers": {"my-server": {"command": "npx", "args": ["-y", "some-mcp-server"]}}}'></textarea>
+    <div style="margin-top: 0.6rem;">
+      <button class="primary" id="validate-btn" type="button">Validate</button>
+    </div>
+    <div id="paste-report" style="margin-top: 0.75rem;" aria-live="polite"></div>
+  </div>
+</div>
+
+<div class="col-right">
+  <div class="panel">
+    <div class="out-head">
+      <h2 style="margin-bottom: 0;">Generated config</h2>
+      <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+        <div class="client-toggle" role="group" aria-label="Target client">
+          <button id="client-desktop" type="button" aria-pressed="true">Claude Desktop</button>
+          <button id="client-code" type="button" aria-pressed="false">Claude Code</button>
+        </div>
+        <button class="primary" id="copy-btn" type="button">Copy JSON</button>
+      </div>
+    </div>
+    <div id="gen-warnings" aria-live="polite"></div>
+    <pre id="output" aria-label="Generated configuration JSON"></pre>
+  </div>
+
+  <div class="panel">
+    <h2>Where this file lives</h2>
+    <div class="loc-block" id="loc-block"></div>
+  </div>
+</div>
+</div>
+
+<footer>
+  <div>MCP Config Generator. Open source, MIT licensed. <a href="https://github.com/0xelitesystem/mcp-config-generator" target="_blank" rel="noopener">View source</a>.</div>
+  <div>All client-side, works offline. Built by <a href="https://elitesystem.ai" target="_blank" rel="noopener">elitesystem.ai</a>.</div>
+</footer>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+
+// Theme toggle
+const themeBtn = $("theme-toggle");
+function setTheme(t) {
+  document.documentElement.setAttribute("data-theme", t);
+  themeBtn.textContent = t === "dark" ? "Light" : "Dark";
+}
+themeBtn.addEventListener("click", () => {
+  const cur = document.documentElement.getAttribute("data-theme") || "light";
+  setTheme(cur === "dark" ? "light" : "dark");
+});
+setTheme("light");
+
+// ---------- State ----------
+let servers = [];
+let client = "desktop"; // "desktop" | "code"
+let nextId = 1;
+
+function blankServer() {
+  return { id: nextId++, name: "", transport: "stdio", command: "", args: [""], env: [], url: "", headers: [] };
+}
+
+// ---------- Server form rendering ----------
+function renderServers() {
+  const root = $("servers");
+  root.innerHTML = "";
+  if (!servers.length) {
+    const d = document.createElement("div");
+    d.className = "empty-note";
+    d.style.marginBottom = "0.85rem";
+    d.textContent = "No servers yet. Add one, or load an example preset below.";
+    root.appendChild(d);
+  }
+  servers.forEach((s, idx) => root.appendChild(serverCard(s, idx)));
+  refreshOutput();
+}
+
+function field(labelText, inputEl) {
+  const wrap = document.createElement("div");
+  wrap.className = "frow";
+  const lab = document.createElement("label");
+  lab.textContent = labelText;
+  wrap.appendChild(lab);
+  wrap.appendChild(inputEl);
+  return wrap;
+}
+
+function textInput(value, placeholder, oninput) {
+  const i = document.createElement("input");
+  i.type = "text";
+  i.value = value;
+  i.placeholder = placeholder || "";
+  i.spellcheck = false;
+  i.addEventListener("input", () => { oninput(i.value); refreshOutput(); });
+  return i;
+}
+
+function serverCard(s, idx) {
+  const card = document.createElement("div");
+  card.className = "server-card";
+
+  const head = document.createElement("div");
+  head.className = "server-head";
+  const title = document.createElement("div");
+  title.className = "server-title";
+  title.textContent = "Server " + (idx + 1) + (s.name ? ": " + s.name : "");
+  const rm = document.createElement("button");
+  rm.className = "small danger";
+  rm.type = "button";
+  rm.textContent = "Remove";
+  rm.addEventListener("click", () => { servers = servers.filter((x) => x.id !== s.id); renderServers(); });
+  head.appendChild(title);
+  head.appendChild(rm);
+  card.appendChild(head);
+
+  // Name + transport
+  const split = document.createElement("div");
+  split.className = "frow-split";
+  split.appendChild(field("Server name", textInput(s.name, "e.g. filesystem", (v) => { s.name = v; title.textContent = "Server " + (idx + 1) + (v ? ": " + v : ""); })));
+  const sel = document.createElement("select");
+  [["stdio", "stdio (local command)"], ["http", "remote HTTP"], ["sse", "remote SSE"]].forEach(([v, t]) => {
+    const o = document.createElement("option");
+    o.value = v; o.textContent = t;
+    if (s.transport === v) o.selected = true;
+    sel.appendChild(o);
+  });
+  sel.addEventListener("change", () => { s.transport = sel.value; renderServers(); });
+  split.appendChild(field("Transport", sel));
+  card.appendChild(split);
+
+  if (s.transport === "stdio") {
+    card.appendChild(field("Command", textInput(s.command, "e.g. npx", (v) => { s.command = v; })));
+
+    // Args list
+    const argsWrap = document.createElement("div");
+    argsWrap.className = "frow";
+    const argsLab = document.createElement("label");
+    argsLab.textContent = "Arguments (one per row)";
+    argsWrap.appendChild(argsLab);
+    s.args.forEach((a, ai) => {
+      const row = document.createElement("div");
+      row.className = "arg-row";
+      row.appendChild(textInput(a, "argument " + (ai + 1), (v) => { s.args[ai] = v; }));
+      const del = document.createElement("button");
+      del.className = "small danger";
+      del.type = "button";
+      del.textContent = "x";
+      del.setAttribute("aria-label", "Remove argument " + (ai + 1));
+      del.addEventListener("click", () => { s.args.splice(ai, 1); renderServers(); });
+      row.appendChild(del);
+      argsWrap.appendChild(row);
+    });
+    const addArg = document.createElement("button");
+    addArg.className = "add-row-btn";
+    addArg.type = "button";
+    addArg.textContent = "+ argument";
+    addArg.addEventListener("click", () => { s.args.push(""); renderServers(); });
+    argsWrap.appendChild(addArg);
+    card.appendChild(argsWrap);
+
+    // Env pairs
+    card.appendChild(kvEditor(s, "env", "Environment variables (optional)", "KEY", "value", "+ env variable"));
+  } else {
+    card.appendChild(field("URL", textInput(s.url, "https://mcp.example.com/mcp", (v) => { s.url = v; })));
+    card.appendChild(kvEditor(s, "headers", "Headers (optional)", "Header-Name", "value", "+ header"));
+  }
+
+  return card;
+}
+
+function kvEditor(s, key, labelText, phK, phV, addLabel) {
+  const wrap = document.createElement("div");
+  wrap.className = "frow";
+  const lab = document.createElement("label");
+  lab.textContent = labelText;
+  wrap.appendChild(lab);
+  s[key].forEach((pair, pi) => {
+    const row = document.createElement("div");
+    row.className = "kv-row";
+    row.appendChild(textInput(pair[0], phK, (v) => { pair[0] = v; }));
+    row.appendChild(textInput(pair[1], phV, (v) => { pair[1] = v; }));
+    const del = document.createElement("button");
+    del.className = "small danger";
+    del.type = "button";
+    del.textContent = "x";
+    del.setAttribute("aria-label", "Remove row " + (pi + 1));
+    del.addEventListener("click", () => { s[key].splice(pi, 1); renderServers(); });
+    row.appendChild(del);
+    wrap.appendChild(row);
+  });
+  const add = document.createElement("button");
+  add.className = "add-row-btn";
+  add.type = "button";
+  add.textContent = addLabel;
+  add.addEventListener("click", () => { s[key].push(["", ""]); renderServers(); });
+  wrap.appendChild(add);
+  return wrap;
+}
+
+// ---------- Config generation ----------
+function buildConfig() {
+  const out = { mcpServers: {} };
+  servers.forEach((s, i) => {
+    const name = s.name.trim() || "server-" + (i + 1);
+    if (s.transport === "stdio") {
+      const entry = { command: s.command.trim() };
+      const args = s.args.map((a) => a.trim()).filter((a) => a !== "");
+      if (args.length) entry.args = args;
+      const env = {};
+      s.env.forEach(([k, v]) => { if (k.trim()) env[k.trim()] = v; });
+      if (Object.keys(env).length) entry.env = env;
+      out.mcpServers[name] = entry;
+    } else {
+      const entry = { type: s.transport, url: s.url.trim() };
+      const headers = {};
+      s.headers.forEach(([k, v]) => { if (k.trim()) headers[k.trim()] = v; });
+      if (Object.keys(headers).length) entry.headers = headers;
+      out.mcpServers[name] = entry;
+    }
+  });
+  return out;
+}
+
+function isLocalUrl(u) {
+  return /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])([:/]|$)/i.test(u);
+}
+
+function validateServers() {
+  const msgs = [];
+  const seen = {};
+  servers.forEach((s, i) => {
+    const label = s.name.trim() || "server " + (i + 1);
+    const name = s.name.trim();
+    if (!name) msgs.push(["warn", label + ": no name set; a placeholder name will be used. Give each server a short, stable name."]);
+    if (/\s/.test(name)) msgs.push(["warn", label + ": the name contains spaces. Most clients treat the name as an identifier; use dashes or underscores instead (for example \"" + name.replace(/\s+/g, "-") + "\")."]);
+    if (seen[name || "server-" + (i + 1)]) msgs.push(["err", label + ": duplicate server name. Later entries overwrite earlier ones in a JSON object."]);
+    seen[name || "server-" + (i + 1)] = true;
+
+    if (s.transport === "stdio") {
+      if (!s.command.trim()) msgs.push(["err", label + ": command is empty. A stdio server needs the executable to launch (for example npx, node, python, or a binary path)."]);
+      s.env.forEach(([k, v]) => { if (!k.trim() && v.trim()) msgs.push(["warn", label + ": an env value has no key and will be dropped."]); });
+    } else {
+      const u = s.url.trim();
+      if (!u) {
+        msgs.push(["err", label + ": URL is empty. A remote server needs its endpoint URL."]);
+      } else {
+        let parsed = null;
+        try { parsed = new URL(u); } catch (e) {}
+        if (!parsed) {
+          msgs.push(["err", label + ": \"" + u + "\" is not a valid URL."]);
+        } else if (parsed.protocol !== "https:" && !isLocalUrl(u)) {
+          msgs.push(["warn", label + ": uses " + parsed.protocol + "// on a non-local host. Traffic (including any auth headers) would travel unencrypted; use https. Plain http is fine for localhost during development."]);
+        }
+        s.headers.forEach(([k, v]) => { if (!k.trim() && v.trim()) msgs.push(["warn", label + ": a header value has no name and will be dropped."]); });
+      }
+    }
+  });
+  return msgs;
+}
+
+function refreshOutput() {
+  $("output").textContent = servers.length
+    ? JSON.stringify(buildConfig(), null, 2)
+    : '{\n  "mcpServers": {}\n}';
+  const box = $("gen-warnings");
+  box.innerHTML = "";
+  validateServers().forEach(([lvl, txt]) => {
+    const d = document.createElement("div");
+    d.className = "msg msg-" + (lvl === "err" ? "err" : "warn");
+    d.textContent = (lvl === "err" ? "Error: " : "Warning: ") + txt;
+    box.appendChild(d);
+  });
+  renderLocations();
+}
+
+// ---------- Client locations ----------
+function renderLocations() {
+  const el = $("loc-block");
+  if (client === "desktop") {
+    el.innerHTML = `
+      <p>Claude Desktop reads stdio server entries from <code>claude_desktop_config.json</code>. Create the file if it does not exist, then restart the app.</p>
+      <dl>
+        <dt>macOS</dt>
+        <dd><code>~/Library/Application Support/Claude/claude_desktop_config.json</code></dd>
+        <dt>Windows</dt>
+        <dd><code>%APPDATA%\\Claude\\claude_desktop_config.json</code></dd>
+      </dl>
+      <p style="margin-top: 0.6rem;">Note: this config file is primarily for stdio (local command) servers. If your Claude Desktop version does not accept remote url entries here, add remote servers through the app's connector settings instead, or bridge them through a local stdio gateway.</p>`;
+  } else {
+    el.innerHTML = `
+      <p>Claude Code reads project-scoped servers from <code>.mcp.json</code> in the project root (this is the file to commit if the team should share it).</p>
+      <dl>
+        <dt>Project scope (all platforms)</dt>
+        <dd><code>&lt;project root&gt;/.mcp.json</code></dd>
+      </dl>
+      <p style="margin-top: 0.6rem;">CLI alternative, equivalent to editing the file by hand:</p>
+      <dl>
+        <dt>stdio server</dt>
+        <dd><code>claude mcp add &lt;name&gt; -- &lt;command&gt; [args...]</code></dd>
+        <dt>Remote server</dt>
+        <dd><code>claude mcp add --transport http &lt;name&gt; &lt;url&gt;</code></dd>
+      </dl>`;
+  }
+}
+
+$("client-desktop").addEventListener("click", () => {
+  client = "desktop";
+  $("client-desktop").setAttribute("aria-pressed", "true");
+  $("client-code").setAttribute("aria-pressed", "false");
+  renderLocations();
+});
+$("client-code").addEventListener("click", () => {
+  client = "code";
+  $("client-desktop").setAttribute("aria-pressed", "false");
+  $("client-code").setAttribute("aria-pressed", "true");
+  renderLocations();
+});
+
+// ---------- Copy ----------
+$("copy-btn").addEventListener("click", () => {
+  const text = $("output").textContent;
+  const btn = $("copy-btn");
+  const done = () => {
+    const old = btn.textContent;
+    btn.textContent = "Copied";
+    setTimeout(() => { btn.textContent = old; }, 1400);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+  } else {
+    fallbackCopy(text, done);
+  }
+});
+function fallbackCopy(text, done) {
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand("copy"); } catch (e) {}
+  document.body.removeChild(ta);
+  done();
+}
+
+// ---------- Presets (illustrative examples) ----------
+$("add-server").addEventListener("click", () => { servers.push(blankServer()); renderServers(); });
+
+$("preset-fs").addEventListener("click", () => {
+  const s = blankServer();
+  s.name = "filesystem";
+  s.transport = "stdio";
+  s.command = "npx";
+  s.args = ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/allowed/folder"];
+  servers.push(s);
+  renderServers();
+});
+$("preset-remote").addEventListener("click", () => {
+  const s = blankServer();
+  s.name = "example-remote";
+  s.transport = "http";
+  s.url = "https://mcp.example.com/mcp";
+  s.headers = [["Authorization", "Bearer YOUR_TOKEN"]];
+  servers.push(s);
+  renderServers();
+});
+$("preset-local").addEventListener("click", () => {
+  const s = blankServer();
+  s.name = "local-dev";
+  s.transport = "http";
+  s.url = "http://localhost:3000/mcp";
+  servers.push(s);
+  renderServers();
+});
+
+// ---------- Paste validation ----------
+$("validate-btn").addEventListener("click", () => {
+  const report = $("paste-report");
+  report.innerHTML = "";
+  const raw = $("paste-input").value.trim();
+  const add = (lvl, txt) => {
+    const d = document.createElement("div");
+    d.className = "msg msg-" + lvl;
+    d.textContent = txt;
+    report.appendChild(d);
+  };
+  if (!raw) { add("err", "Nothing to validate. Paste a config first."); return; }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (e) {
+    add("err", "Not valid JSON: " + e.message);
+    add("info", "Common causes: trailing commas, single quotes instead of double quotes, or comments (JSON allows none of these).");
+    return;
+  }
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    add("err", "The top level must be a JSON object.");
+    return;
+  }
+
+  let map = parsed.mcpServers;
+  if (map === undefined) {
+    const keys = Object.keys(parsed);
+    const looksLikeBareMap = keys.length && keys.every((k) => typeof parsed[k] === "object" && parsed[k] !== null && ("command" in parsed[k] || "url" in parsed[k]));
+    if (looksLikeBareMap) {
+      add("warn", "No \"mcpServers\" key. This looks like a bare server map; wrap it as {\"mcpServers\": { ... }} for Claude Desktop and Claude Code.");
+      map = parsed;
+    } else {
+      add("err", "Missing the \"mcpServers\" key. Expected shape: {\"mcpServers\": {\"name\": { ... }}}.");
+      return;
+    }
+  }
+  if (typeof map !== "object" || map === null || Array.isArray(map)) {
+    add("err", "\"mcpServers\" must be an object mapping server names to definitions.");
+    return;
+  }
+
+  const names = Object.keys(map);
+  if (!names.length) add("warn", "\"mcpServers\" is empty. Nothing will be connected.");
+
+  let problems = 0;
+  names.forEach((name) => {
+    const s = map[name];
+    const p = (lvl, txt) => { problems++; add(lvl, "\"" + name + "\": " + txt); };
+    if (/\s/.test(name)) p("warn", "name contains spaces; use dashes or underscores.");
+    if (typeof s !== "object" || s === null || Array.isArray(s)) { p("err", "definition must be an object."); return; }
+
+    const hasCommand = typeof s.command === "string" && s.command.trim() !== "";
+    const hasUrl = typeof s.url === "string" && s.url.trim() !== "";
+
+    if (!hasCommand && !hasUrl) {
+      p("err", "needs either \"command\" (stdio) or \"url\" (remote). " + ("command" in s ? "\"command\" is empty." : "url" in s ? "\"url\" is empty." : "Neither is present."));
+      return;
+    }
+    if (hasCommand && hasUrl) p("warn", "has both \"command\" and \"url\"; a server is one or the other, and clients may reject or ignore one of them.");
+
+    if (hasCommand) {
+      if ("args" in s && (!Array.isArray(s.args) || s.args.some((a) => typeof a !== "string"))) p("err", "\"args\" must be an array of strings.");
+      if ("env" in s && (typeof s.env !== "object" || s.env === null || Array.isArray(s.env) || Object.values(s.env).some((v) => typeof v !== "string"))) p("err", "\"env\" must be an object of string values.");
+    }
+    if (hasUrl) {
+      let u = null;
+      try { u = new URL(s.url.trim()); } catch (e) {}
+      if (!u) p("err", "url is not a valid URL.");
+      else if (u.protocol !== "https:" && !isLocalUrl(s.url.trim())) p("warn", "non-https url on a non-local host; credentials in headers would travel unencrypted.");
+      if ("type" in s && !["http", "sse", "streamable-http"].includes(s.type)) p("warn", "\"type\" is \"" + s.type + "\"; expected \"http\" or \"sse\".");
+      if ("headers" in s && (typeof s.headers !== "object" || s.headers === null || Array.isArray(s.headers))) p("err", "\"headers\" must be an object.");
+    }
+  });
+
+  if (!problems && names.length) add("ok", "Config parses cleanly: " + names.length + " server" + (names.length === 1 ? "" : "s") + ", no problems found.");
+  add("info", "Reminder: stdio entries run arbitrary local commands with your user account. Review every command and package name before trusting a pasted config.");
+});
+
+renderServers();
+</script>
+</body>
+</html>
