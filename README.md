@@ -29,6 +29,10 @@ The form state is a plain array of server objects. On every keystroke the tool r
 
 Everything runs client-side in your browser. Server names, commands, URLs, headers, and env values (including API keys) never leave the page. No analytics, no tracking, no network requests of any kind.
 
+## More
+
+Part of a catalog of single-file browser tools and plain-language references, all MIT licensed and dependency-free: [0xelitesystem.github.io](https://0xelitesystem.github.io/). Built by [elitesystem.ai](https://elitesystem.ai).
+
 ## License
 
 MIT. Copyright 0xelitesystem 2026.
