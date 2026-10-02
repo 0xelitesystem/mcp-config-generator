@@ -4,9 +4,18 @@ Build and validate MCP (Model Context Protocol) server configuration JSON in you
 
 One HTML file, no external dependencies, works offline.
 
-## Live demo
+**Live demo:** https://0xelitesystem.github.io/mcp-config-generator/
 
-https://0xelitesystem.github.io/mcp-config-generator/
+## Use
+
+1. Press **Add server**, or start from a preset: filesystem (stdio), remote HTTP server, or local dev server (HTTP).
+2. Fill in the command and arguments for a stdio server, or the URL and headers for a remote one, plus any env values.
+3. Fix anything the live warnings flag, choose **Claude Desktop** or **Claude Code**, and press **Copy JSON**.
+4. Paste the JSON into the config file at the location shown for your client and OS. To check a config you already have, paste it into the validate panel and press **Validate**.
+
+## Why this exists
+
+An MCP client config is a small JSON file that fails quietly when a field is wrong: a space in a server name, a missing command, a remote URL without https. This tool builds the file from a form and checks it as you type. It is one HTML file that runs in your browser, with no tracking and no server, under the MIT license.
 
 ## Features
 
@@ -28,6 +37,21 @@ The form state is a plain array of server objects. On every keystroke the tool r
 ## Privacy
 
 Everything runs client-side in your browser. Server names, commands, URLs, headers, and env values (including API keys) never leave the page. No analytics, no tracking, no network requests of any kind.
+
+The only thing written to storage is your light or dark theme choice, saved in `localStorage` under the key `theme`.
+
+## Run locally
+
+```bash
+git clone https://github.com/0xelitesystem/mcp-config-generator
+cd mcp-config-generator
+```
+
+Open `index.html` in any modern browser. Or serve the folder with `python -m http.server 8000` and visit http://localhost:8000/.
+
+## Build
+
+No build step. The whole tool is one `index.html` file with its CSS and JavaScript inline, and nothing to install.
 
 ## Related
 
